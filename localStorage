@@ -1,0 +1,74 @@
+<script>
+// ✅ استمع لتغييرات localStorage من أي موقع
+window.addEventListener('storage', function(e) {
+  // إذا تغيرت قائمة الطلبات
+  if (e.key === 'memoOrders' && e.newValue) {
+    const orders = JSON.parse(e.newValue);
+    const latestOrder = orders[orders.length - 1]; // أحدث طلب
+    showOrderAlert(latestOrder);
+  }
+});
+
+// عرض تنبيه للطلب
+function showOrderAlert(order) {
+  const container = document.getElementById("incoming-orders");
+  
+  // تجنب التكرار
+  if (document.querySelector(`[data-order-id="${order.id}"]`)) return;
+
+  const alert = document.createElement("div");
+  alert.className = "order-alert";
+  alert.setAttribute("data-order-id", order.id);
+  alert.innerHTML = `
+    <strong>🚨 طلب جديد من: ${order.name}</strong><br>
+    <strong>الهاتف:</strong> ${order.phone}<br>
+    <strong>العنوان:</strong> ${order.address}<br>
+    <strong>الإجمالي:</strong> ${order.total} درهم<br>
+    <strong>الوقت:</strong> ${order.timestamp}
+  `;
+  container.appendChild(alert);
+
+  // 🔊 صوت عند الطلب
+  const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-ringing-933.mp3");
+  audio.play().catch(e => console.log("تم رفض الصوت تلقائيًا"));
+
+  // 💬 إشعار مكتبي (إذا مُسموح)
+  if (Notification.permission === "granted") {
+    new Notification("طلب جديد من ميمو إكسبريس!", {
+      body: `طلب من ${order.name}، الإجمالي: ${order.total} درهم`,
+      icon: "https://cdn-icons-png.flaticon.com/512/2936/2936888.png"
+    });
+  }
+}
+
+// طلب إذن الإشعارات
+if (Notification.permission !== "denied") {
+  Notification.requestPermission();
+}
+
+// تحميل الطلبات السابقة عند الفتح
+window.onload = () => {
+  const saved = localStorage.getItem("memoOrders");
+  const container = document.getElementById("incoming-orders");
+
+  if (saved) {
+    const orders = JSON.parse(saved);
+    if (orders.length > 0) {
+      container.innerHTML = "<h3>آخر الطلبات:</h3>";
+      const last = orders.slice(-5).reverse(); // أحدث 5 طلبات
+      last.forEach(order => {
+        const alert = document.createElement("div");
+        alert.className = "order-alert";
+        alert.setAttribute("data-order-id", order.id);
+        alert.innerHTML = `
+          <strong>${order.name}</strong> - ${order.total} درهم
+          <small>${order.timestamp}</small>
+        `;
+        container.appendChild(alert);
+      });
+    }
+  } else {
+    container.innerHTML = "<p>جاري الانتظار... سيتم عرض الطلبات الجديدة هنا.</p>";
+  }
+};
+</script>
