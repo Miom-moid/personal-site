@@ -1,28 +1,67 @@
-document.getElementById("order-form").onsubmit = function(e) {
-  e.preventDefault();
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ميمو - لوحة التحكم</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
 
-  // جمع البيانات
-  const name = document.getElementById("customer-name").value;
-  const phone = document.getElementById("customer-phone").value;
-  const address = document.getElementById("customer-address").value;
-  const notes = document.getElementById("order-notes").value;
-  const total = document.getElementById("final-total").textContent;
+  <!-- الشريط العلوي -->
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <i class="fas fa-user-shield"></i> ميمو
+      </div>
+      <nav class="nav">
+        <ul class="nav-list">
+          <li><a href="#home">الرئيسية</a></li>
+          <li><a href="#orders">الطلبات</a></li>
+          <li><a href="#contact">اتصل بي</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
-  // إنشاء كائن الطلب
-  const orderData = {
-    id: Date.now(),
-    name,
-    phone,
-    address,
-    notes,
-    total,
-    timestamp: new Date().toLocaleString('ar-SA')
-  };
+  <!-- القسم الرئيسي -->
+  <section id="home" class="hero">
+    <div class="container">
+      <h1>أنا ميمو</h1>
+      <p>مطوّر ويب ومدير نظام توصيل طلبات</p>
+      <a href="#orders" class="btn-primary">عرض الطلبات الجديدة</a>
+    </div>
+  </section>
 
-  // ✅ هنا نستخدم localStorage
-  let orders = JSON.parse(localStorage.getItem("memoOrders") || "[]");
-  orders.push(orderData);
-  localStorage.setItem("memoOrders", JSON.stringify(orders));
+  <!-- قسم الطلبات -->
+  <section id="orders" class="orders-section">
+    <div class="container">
+      <h2>الطلبات الواردة 🚨</h2>
+      <div id="incoming-orders">
+        <p>جاري الانتظار... سيتم عرض الطلبات الجديدة فور إرسالها من موقع المطعم.</p>
+      </div>
+    </div>
+  </section>
 
-  // ... بقية الكود (رسالة النجاح، إغلاق النموذج)
-};
+  <!-- اتصل بي -->
+  <section id="contact" class="contact">
+    <div class="container">
+      <h2>اتصل بي</h2>
+      <p><i class="fas fa-phone"></i> 06 12-34-56-78</p>
+      <p><i class="fas fa-envelope"></i> memo@example.com</p>
+      <p><i class="fas fa-map-marker-alt"></i> الدار البيضاء، المغرب</p>
+    </div>
+  </section>
+
+  <!-- التذييل -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 ميمو. جميع الحقوق محفوظة.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
