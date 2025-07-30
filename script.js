@@ -1,22 +1,19 @@
 // ===================================================================
-// 🛠 ملف script.js - موقعك الشخصي
-// ✅ معدّ خصيصًا ليعمل مع: https://miom-moid.github.io/--express.github.io
-// 🔁 لا يحتاج تغيير اسم مستودع
-// ⏱ يُحدّث الطلبات كل 3 ثواني تلقائيًا
-// 🔔 يُظهر تنبيه + صوت + إشعار عند طلب جديد
+// 🛠 استقبال الطلبات من موقع المطعم
+// ✅ يعمل مع: https://miom-moid.github.io/--express.github.io
+// 🔁 تحديث تلقائي كل 3 ثواني
+// 🔔 صوت + إشعار عند طلب جديد
 // ===================================================================
 
-// 🕒 تفعيل التحديث التلقائي كل 3 ثواني
+// بدء التحديث التلقائي
 document.addEventListener("DOMContentLoaded", () => {
-  startPollingForOrders();
+  startPolling();
 });
 
-// دالة تفحص localStorage كل 3 ثواني
-function startPollingForOrders() {
-  // عرض الطلبات الحالية فورًا
-  loadSavedOrders();
+// فحص localStorage كل 3 ثواني
+function startPolling() {
+  loadExistingOrders(); // عرض الطلبات الحالية
 
-  // ثم التحديث التلقائي
   setInterval(() => {
     const rawData = localStorage.getItem("memoOrders");
     if (rawData) {
@@ -24,108 +21,88 @@ function startPollingForOrders() {
         const orders = JSON.parse(rawData);
         displayNewOrders(orders);
       } catch (e) {
-        console.error("فشل تحليل بيانات الطلبات:", e);
+        console.error("خطأ في قراءة الطلبات:", e);
       }
     }
   }, 3000);
 }
 
-// عرض الطلبات المحفوظة عند التحميل
-function loadSavedOrders() {
+// عرض الطلبات المحفوظة
+function loadExistingOrders() {
   const container = document.getElementById("incoming-orders");
   if (!container) return;
 
   const saved = localStorage.getItem("memoOrders");
-
   if (saved) {
     try {
       const orders = JSON.parse(saved);
       if (Array.isArray(orders) && orders.length > 0) {
-        container.innerHTML = "<h3>الطلبات الواردة 📬</h3>";
-        const latest = orders.slice(-5).reverse(); // أحدث 5 طلبات
-        latest.forEach(order => {
-          appendOrderToList(order);
-        });
-      } else {
-        container.innerHTML = "<p>لا توجد طلبات بعد.</p>";
+        container.innerHTML = "<h3>آخر الطلبات:</h3>";
+        const latest = orders.slice(-5).reverse();
+        latest.forEach(order => appendOrder(order));
       }
     } catch (e) {
-      container.innerHTML = "<p>حدث خطأ في تحميل الطلبات.</p>";
+      container.innerHTML = "<p>خطأ في تحميل البيانات.</p>";
     }
-  } else {
-    container.innerHTML = "<p>جاري الانتظار... سيتم عرض الطلبات الجديدة فور إرسالها من موقع المطعم.</p>";
   }
 }
 
-// عرض الطلبات الجديدة فقط (لتجنب التكرار)
+// عرض الطلبات الجديدة فقط
 function displayNewOrders(orders) {
   const container = document.getElementById("incoming-orders");
-  if (!container) return;
-
-  const existingIds = Array.from(container.querySelectorAll("[data-order-id]"))
-                           .map(el => el.getAttribute("data-order-id"));
+  const existingIds = Array.from(container.querySelectorAll("[data-id]"))
+                           .map(el => el.getAttribute("data-id"));
 
   const reversed = [...orders].reverse();
-
-  let newFound = false;
+  let newOrderFound = false;
 
   reversed.forEach(order => {
     if (!existingIds.includes(String(order.id))) {
-      appendOrderToList(order);
-      playNotificationSound();
-      showDesktopNotification(order);
-      newFound = true;
+      appendOrder(order);
+      playSound();
+      showNotification(order);
+      newOrderFound = true;
     }
   });
 
-  // إذا وُجد طلب جديد، نعيد ترتيب العرض
-  if (newFound) {
+  // إعادة الترتيب (الأحدث أولًا)
+  if (newOrderFound) {
     const title = container.querySelector("h3");
-    const children = Array.from(container.children).filter(el => el !== title);
+    const children = Array.from(container.children).filter(c => c !== title);
     container.innerHTML = "";
     if (title) container.appendChild(title);
-    children.forEach(child => container.appendChild(child));
+    children.forEach(c => container.appendChild(c));
   }
 }
 
 // إضافة طلب إلى القائمة
-function appendOrderToList(order) {
+function appendOrder(order) {
   const container = document.getElementById("incoming-orders");
   const div = document.createElement("div");
   div.className = "order-alert";
-  div.setAttribute("data-order-id", order.id);
-  div.style.padding = "15px";
-  div.style.margin = "10px 0";
-  div.style.background = "#e8f5e8";
-  div.style.border = "1px solid #8bc34a";
-  div.style.borderRadius = "10px";
-  div.style.fontFamily = "system-ui";
-  div.style.direction = "rtl";
+  div.setAttribute("data-id", order.id);
   div.innerHTML = `
-    <strong style="color: #2e7d32;">طلب جديد من: ${order.name}</strong><br>
-    <strong>📱 الجوال:</strong> ${order.phone}<br>
-    <strong>📍 العنوان:</strong> ${order.address}<br>
-    <strong>💰 الإجمالي:</strong> ${order.total} درهم<br>
+    <strong>طلب جديد من: ${order.name}</strong><br>
+    <strong>📱:</strong> ${order.phone}<br>
+    <strong>📍:</strong> ${order.address}<br>
+    <strong>💰:</strong> ${order.total} درهم<br>
     <small>⏰ ${order.timestamp}</small>
   `;
   container.appendChild(div);
 }
 
-// 🔊 تشغيل صوت عند استقبال طلب
-function playNotificationSound() {
+// 🔊 صوت عند الطلب
+function playSound() {
   const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-ringing-933.mp3");
-  audio.play().catch(e => {
-    console.log("تم تجاهل الصوت — قد يكون ممنوعًا.");
-  });
+  audio.play().catch(() => console.log("تم تجاهل الصوت"));
 }
 
 // 💬 إشعار مكتبي
-function showDesktopNotification(order) {
+function showNotification(order) {
   if (Notification.permission === "granted") {
-    new Notification("طلب جديد من ميمو إكسبريس!", {
-      body: `طلب من ${order.name}، الإجمالي: ${order.total} درهم`,
-      icon: "https://cdn-icons-png.flaticon.com/512/2936/2936888.png",
-      tag: order.id
+    new Notification("طلب جديد!", {
+      body: `من ${order.name} - الإجمالي: ${order.total} درهم`,
+      icon: "https://cdn-icons-png.flaticon.com/512/2936/2936888.png"
     });
   } else if (Notification.permission !== "denied") {
     Notification.requestPermission();
